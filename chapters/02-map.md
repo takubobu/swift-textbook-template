@@ -1,66 +1,338 @@
 # 第2章：地図アプリの基本
 
-> 執筆者：（氏名）
-> 最終更新：YYYY-MM-DD
+> 執筆者：関根 拓斗
+> 最終更新：2026-05-15
 
 ## この章で学ぶこと
 
-（この章で扱うトピックの概要を2〜3行で書く。自分の言葉で。）
-
-例：この章では、MapKitを使ってアプリ内に地図を表示し、特定の位置にマーカーを配置する方法を学ぶ。具体的にはランドマークデータを構造体で定義し、地図上にマーカーを表示して、カテゴリでフィルターするアプリを題材にする。
+MapKitフレームワークを使用して、iOSアプリ内にインタラクティブな地図を表示する方法を学ぶ。具体的には、カスタムデータ構造を定義して複数の地点を管理し、それらを地図上にマーカーとして配置し、ユーザーの選択に合わせて表示を切り替えるフィルター機能の実装に挑戦します。
 
 ## 模範コードの全体像
 
 （教員から配布された模範コードをここに貼り付ける）
 
 ```swift
-// ここに模範コード全体を貼る
+// ============================================
+// 第2章（基本）：MapKitで地図を表示するアプリ
+// ============================================
+// 東京の観光スポットを地図上にマーカーで表示します。
+// マーカーをタップすると詳細情報が表示されます。
+// ============================================
+
+import SwiftUI
+import MapKit
+
+// MARK: - データモデル
+
+struct Landmark: Identifiable, Hashable {
+    let id = UUID()
+    let name: String
+    let description: String
+    let coordinate: CLLocationCoordinate2D
+    let category: Category
+
+    static func == (lhs: Landmark, rhs: Landmark) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    enum Category: String, CaseIterable {
+        case temple = "寺社"
+        case tower = "タワー"
+        case park = "公園"
+
+        var iconName: String {
+            switch self {
+            case .temple: return "building.columns"
+            case .tower: return "antenna.radiowaves.left.and.right"
+            case .park: return "leaf"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .temple: return .red
+            case .tower: return .blue
+            case .park: return .green
+            }
+        }
+    }
+}
+
+// MARK: - サンプルデータ
+
+extension Landmark {
+    static let sampleData: [Landmark] = [
+        Landmark(
+            name: "浅草寺",
+            description: "東京都内最古の寺院。雷門が有名。",
+            coordinate: CLLocationCoordinate2D(latitude: 35.7148, longitude: 139.7967),
+            category: .temple
+        ),
+        Landmark(
+            name: "東京タワー",
+            description: "1958年に完成した高さ333mの電波塔。",
+            coordinate: CLLocationCoordinate2D(latitude: 35.6586, longitude: 139.7454),
+            category: .tower
+        ),
+        Landmark(
+            name: "東京スカイツリー",
+            description: "高さ634mの世界一高い自立式電波塔。",
+            coordinate: CLLocationCoordinate2D(latitude: 35.7101, longitude: 139.8107),
+            category: .tower
+        ),
+        Landmark(
+            name: "明治神宮",
+            description: "明治天皇と昭憲皇太后を祀る神社。",
+            coordinate: CLLocationCoordinate2D(latitude: 35.6764, longitude: 139.6993),
+            category: .temple
+        ),
+        Landmark(
+            name: "上野恩賜公園",
+            description: "美術館や動物園がある広大な公園。",
+            coordinate: CLLocationCoordinate2D(latitude: 35.7146, longitude: 139.7732),
+            category: .park
+        ),
+        Landmark(
+            name: "新宿御苑",
+            description: "都心にある広さ58.3ヘクタールの庭園。",
+            coordinate: CLLocationCoordinate2D(latitude: 35.6852, longitude: 139.7100),
+            category: .park
+        ),
+    ]
+}
+
+// MARK: - メインビュー
+
+struct ContentView: View {
+    @State private var cameraPosition: MapCameraPosition = .region(
+        MKCoordinateRegion(
+            center: CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671),
+            span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+        )
+    )
+    @State private var selectedLandmark: Landmark?
+    @State private var selectedCategories: Set<Landmark.Category> = Set(Landmark.Category.allCases)
+
+    var filteredLandmarks: [Landmark] {
+        Landmark.sampleData.filter { selectedCategories.contains($0.category) }
+    }
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // 地図
+            Map(position: $cameraPosition, selection: $selectedLandmark) {
+                ForEach(filteredLandmarks) { landmark in
+                    Marker(
+                        landmark.name,
+                        systemImage: landmark.category.iconName,
+                        coordinate: landmark.coordinate
+                    )
+                    .tint(landmark.category.color)
+                    .tag(landmark)
+                }
+            }
+            .mapStyle(.standard(elevation: .realistic))
+
+            // カテゴリフィルター
+            VStack(spacing: 8) {
+                if let landmark = selectedLandmark {
+                    LandmarkCard(landmark: landmark)
+                        .transition(.move(edge: .bottom))
+                }
+
+                CategoryFilter(selectedCategories: $selectedCategories)
+            }
+            .padding()
+        }
+        .onMapCameraChange { context in
+            // 地図の操作に応じた処理を追加できる
+        }
+    }
+}
+
+// MARK: - カテゴリフィルター
+
+struct CategoryFilter: View {
+    @Binding var selectedCategories: Set<Landmark.Category>
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(Landmark.Category.allCases, id: \.self) { category in
+                Button {
+                    if selectedCategories.contains(category) {
+                        selectedCategories.remove(category)
+                    } else {
+                        selectedCategories.insert(category)
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: category.iconName)
+                        Text(category.rawValue)
+                    }
+                    .font(.caption)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(
+                        selectedCategories.contains(category)
+                            ? category.color.opacity(0.2)
+                            : Color.gray.opacity(0.1)
+                    )
+                    .foregroundStyle(
+                        selectedCategories.contains(category)
+                            ? category.color
+                            : .gray
+                    )
+                    .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(8)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+// MARK: - ランドマーク詳細カード
+
+struct LandmarkCard: View {
+    let landmark: Landmark
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Image(systemName: landmark.category.iconName)
+                    .foregroundStyle(landmark.category.color)
+                Text(landmark.name)
+                    .font(.headline)
+                Spacer()
+            }
+            Text(landmark.description)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+#Preview {
+    ContentView()
+}
+
 ```
 
 **このアプリは何をするものか：**
 
-（アプリの動作を自分の言葉で説明する。スクリーンショットを貼ってもよい。）
+東京の主要な観光スポットを地図上に表示するアプリ
 
 ## コードの詳細解説
 
 ### データモデル（ランドマーク構造体）
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+struct Landmark: Identifiable, Hashable {
+    let id = UUID()
+    let name: String
+    let description: String
+    let coordinate: CLLocationCoordinate2D
+    let category: Category
+
+    static func == (lhs: Landmark, rhs: Landmark) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+
+    enum Category: String, CaseIterable {
+        case temple = "寺社"
+        case tower = "タワー"
+        case park = "公園"
+
+        var iconName: String {
+            switch self {
+            case .temple: return "building.columns"
+            case .tower: return "antenna.radiowaves.left.and.right"
+            case .park: return "leaf"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .temple: return .red
+            case .tower: return .blue
+            case .park: return .green
+            }
+        }
+    }
+}
+
 ```
 
 **何をしているか：**
-（この部分が果たしている役割を説明する）
+
+観光スポットの情報(名前や座標)をひとまとめに扱うための「型」を定義している
 
 **なぜこう書くのか：**
-（別の書き方ではなく、この書き方が選ばれている理由を説明する）
+
+Identifiableに適合させることで、ForEachなどでリスト表示する際に各データを一意に識別できるようにするためです。また、地図上の選択を管理するためにHashableが必要になる
 
 **もしこう書かなかったら：**
-（この部分を省略したり変えたりすると何が起きるか。実際に試した結果があればここに書く）
+
+複数の地点をループで回して表示することが難しくなり、どのマーカーがタップされたかを正確に判定できなくなる
 
 ---
 
 ### 地図の表示とカメラ制御
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+@State private var cameraPosition: MapCameraPosition = .region(
+    MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 35.6812, longitude: 139.7671),
+        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+    )
+)
+
+Map(position: $cameraPosition, selection: $selectedLandmark)
 ```
 
 **何をしているか：**
 
+アプリ起動時に表示する地図の初期位置と、ズームレベルを設定している
+
 **なぜこう書くのか：**
 
+ユーザーが地図を動かした際にその状態をアプリが保持・追跡できるようにするため
+
 **もしこう書かなかったら：**
+
+地図がデフォルトの状態で表示されたり、コードから特定の場所に移動させることができなくなる
 
 ---
 
 ### マーカーの表示
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+ForEach(filteredLandmarks) { landmark in
+    Marker(
+        landmark.name,
+        systemImage: landmark.category.iconName,
+        coordinate: landmark.coordinate
+    )
+    .tint(landmark.category.color)
+    .tag(landmark)
+}
 ```
 
 **何をしているか：**
+
+
 
 **なぜこう書くのか：**
 
