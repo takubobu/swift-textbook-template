@@ -374,9 +374,9 @@ var filteredLandmarks: [Landmark] {
 |------|------|--------|
 | 例：`Map` | SwiftUIで地図を表示するビューコンポーネント | `Map(position: .constant(.region(region)))` |
 | 例：`Marker` | 地図上に位置をマーキングするコンポーネント | `Marker("名前", coordinate: coordinate)` |
-| | | |
-| | | |
-| | | |
+| MapCameraPosition | 地図の表示位置やズーム倍率など、カメラの初期位置や現在の状態を管理する型 | @State private var cameraPosition: MapCameraPosition = .region(...) |
+| onMapCameraChange | ユーザーが地図をドラッグしたりピンチイン・アウトして、カメラ位置が変わったことを検知するモディファイア | .onMapCameraChange { context in ... } |
+| CaseIterable | 列挙型（enum）のすべてのケースを配列のようにループ（ForEach）で回せるようにするプロトコル | enum Category: String, CaseIterable { ... } |
 
 ## 自分の実験メモ
 
