@@ -249,9 +249,9 @@ ScrollViewとForEachを組み合わせて自作する必要がありますが、
 |------|------|--------|
 | 例：`Codable` | JSONデータとSwiftの構造体を相互変換するプロトコル | `struct Song: Codable { ... }` |
 | 例：`async/await` | 非同期処理を同期的に書ける構文 | `let data = try await URLSession.shared.data(from: url)` |
-| | | |
-| | | |
-| | | |
+| addingPercentEncoding | 文字列をURLとして安全に送信できる形式に変換するメソッド | searchText.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) |
+| ContentUnavailableView | 検索結果が空のときなど、表示するコンテンツがない状態を美しく伝えるための専用View | ContentUnavailableView("曲を検索してみよう", systemImage: "music.note") |
+| ProgressView | データの読み込み中を表示するためのView | ProgressView("検索中...") |
 
 ## 自分の実験メモ
 
