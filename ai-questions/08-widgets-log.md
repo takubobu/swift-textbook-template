@@ -2,20 +2,31 @@
 
 ## 使用した生成AIツール
 
-（例：ChatGPT 無料版 / Claude 無料版 / Gemini など）
+ChatGPT
 
 ## 質問と回答の記録
 
 ### Q1
 
 **質問：**
-（生成AIに聞いた質問をそのまま書く）
+placeholder / getSnapshot / getTimeline はなぜ３つに分かれてる？
 
 **AIの回答の要点：**
-（長い回答の場合、要点だけ自分の言葉でまとめる）
+
+３つのそれぞれの役割
+
+<img width="709" height="237" alt="スクリーンショット 2026-07-10 15 59 51" src="https://github.com/user-attachments/assets/cc20a0d9-456f-4ed8-b7f0-35425a3345ba" />
+
+・placeholder(in:)：瞬時に表示する「仮の姿」
+
+・getSnapshot(in:completion:)：ギャラリーで選ぶ時の「見本」
+
+・getTimeline(in:completion:)：実際の「動作の司令塔」
+
 
 **自分の理解：**
-（回答を受けて自分がどう理解したか。納得できたか、さらに疑問が生まれたか）
+
+表示の即時性を優先するため、役割を分離して処理していることと、iOSは個別のウィジェットを随時動かすのではなく、スケジュールに従って効率的に更新することで、効率的なユーザー体験をしている。
 
 ### Q2
 
