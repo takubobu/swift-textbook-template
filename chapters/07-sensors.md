@@ -309,28 +309,69 @@ motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
 ### 歩数計（CMPedometer）
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+private let pedometer = CMPedometer()
+
+isPedometerAvailable = CMPedometer.isStepCountingAvailable()
+
+pedometer.startUpdates(from: Date()) { [weak self] data, error in
+    guard let self = self, let data = data else { return }
+
+    DispatchQueue.main.async {
+        self.stepCount = data.numberOfSteps.intValue
+        if let dist = data.distance {
+            self.distance = dist.doubleValue
+        }
+    }
+}
 ```
 
 **何をしているか：**
 
+iPhoneの歩数センサーを利用して、歩数と移動距離をリアルタイムで取得している。
+
 **なぜこう書くのか：**
 
+CMPedometerは歩数や歩行距離を取得するためのクラスであり、startUpdates()を使うことで歩数が増えるたびに自動で最新の値を受け取れるため。
+
 **もしこう書かなかったら：**
+
+歩数や移動距離を取得できず、アプリに現在の歩数や距離が表示されなくなる。
 
 ---
 
 ### CoreLocationとの連携
 
 ```swift
-// 該当部分のコードを抜粋して貼る
+private let locationManager = CLLocationManager()
+
+locationManager.delegate = self
+locationManager.desiredAccuracy = kCLLocationAccuracyBest
+locationManager.requestWhenInUseAuthorization()
+
+locationManager.startUpdatingLocation()
+
+func locationManager(_ manager: CLLocationManager,
+                     didUpdateLocations newLocations: [CLLocation]) {
+    guard let location = newLocations.last else { return }
+
+    currentSpeed = max(0, location.speed)
+    locations.append(location.coordinate)
+}
 ```
 
 **何をしているか：**
 
+GPSを利用して現在地を取得し、移動速度や通過した位置情報を記録している。
+
 **なぜこう書くのか：**
 
+CLLocationManagerを使うことで位置情報を継続的に取得でき、didUpdateLocationsで最新の位置や速度を受け取れるため。
+
 **もしこう書かなかったら：**
+
+現在地や移動速度を取得できず、速度メーターや移動履歴を表示できなくなる。
+
+歩数は取得できても、GPSを利用した位置情報の機能は動作しない。
 
 ---
 
