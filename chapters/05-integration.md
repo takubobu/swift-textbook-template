@@ -517,37 +517,52 @@ modelContext.insert(record)
 
 | 項目 | 説明 | 使用例 |
 |------|------|--------|
-| 例：`TabView` | 複数のビューをタブで切り替えるコンポーネント | `TabView { ... }.tabViewStyle(.page)` |
-| 例：`CLLocationManager` | GPS位置情報を取得するAPIManager | `let location = manager.location?.coordinate` |
-| | | |
-| | | |
-| | | |
+| `TabView` | 複数のビューをタブで切り替えるコンポーネント | `TabView { ... }.tabViewStyle(.page)` |
+| `CLLocationManager` | GPS位置情報を取得するAPIManager | `let location = manager.location?.coordinate` |
+| `CLLocationManager`| CoreLocationフレームワークで端末のGPS位置情報を取得・管理する | `private let manager = CLLocationManager()` |
+| `UserAnnotation` | MapKitの地図上に「ユーザーの現在地を示す青い丸」を自動表示するコンポーネント | `Map { UserAnnotation() }` |
+| `loadTransferable` | PhotosPicker で選択されたアイテムから、画像データ（Data）などを非同期（await）で読み込むメソッド | `newItem?.loadTransferable(type: Data.self)` |
 
 ## 自分の実験メモ
 
 （模範コードを改変して試したことを書く）
 
 **実験1：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：@Queryの並び替え条件を変更してみた
+- 結果：一覧画面の表示順序が作成日時の昇順やタイトル順に切り替わった。
+- わかったこと：@Query の sort や order 引数を変えるだけで、データベースの複雑なソート処理を簡潔に書くことができる。
 
 **実験2：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：AddRecordView の「保存」ボタンの .disabled 条件に selectedImageData == nil を追加してみた。
+- 結果：タイトルと位置情報だけでなく、写真を選択しないと保存ボタンが押せなくなった。
+- わかったこと：.disabled() の論理条件を書き換えることで、必須入力項目のバリデーション（入力チェック）を柔軟に制御できる。
 
 ## AIに聞いて特に理解が深まった質問 TOP3
 
 1. **質問：**
+    PhotosPickerItem から画像を取り出す loadTransferable とは何をしているの？
+
    **得られた理解：**
+   フォトライブラリ内の安全な写真データを、アプリ内で扱える Data 型（バイナリデータ）へ非同期（await）で安全に転送・変換するための処理であること。
 
 2. **質問：**
+    SwiftDataで保存した画像データ（Data）を地図上のアイコンとして表示する仕組みは？
+    
    **得られた理解：**
+   @Model 内の計算プロパティ uiImage で UIImage(data:) を使って復元し、Map内の Annotation クロージャの中で Image(uiImage:) を使ってカスタムUI（丸型画像アイコン）として描画している。
 
 3. **質問：**
+    Map の中に UserAnnotation() と ForEach(records) を並べて書くだけで、なぜ複数のピンが表示されるの？
+    
    **得られた理解：**
+   iOS 17以降のMapKitはSwiftUIの List や VStack と同じように「ViewBuilder」の構造になっており、クロージャの中にピンの要素を並べるだけで自動的に地図上に描画してくれる仕組みになっているから。
 
 ## この章のまとめ
 
-（この章で学んだ最も重要なことを、未来の自分が読み返したときに役立つように書く）
+3つの重要技術
+
+・データの集約： 写真データ・位置情報（緯度経度）・テキストを PhotoRecord モデル1つにまとめてSwiftDataで保存する流れを習得した。
+
+・UIとデータの同期： 保存したデータを @Query で読み出し、地図（ピン表示）と一覧（リスト表示）の2つの画面に即座に反映させる仕組みを理解した。
+
+・権限と安全対策： 位置情報や写真を使う際は Info.plist での使用目的の明記や、オプショナル型を用いたエラー回避が必須であることを学んだ。
