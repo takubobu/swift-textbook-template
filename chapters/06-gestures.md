@@ -499,35 +499,50 @@ angle = lastAngle + value.rotation
 |------|------|--------|
 | `DragGesture` | ドラッグジェスチャーを認識するジェスチャーレコグナイザー | `.gesture(DragGesture().onChanged { ... })` |
 | `MagnificationGesture` | ピンチジェスチャーで拡大・縮小を認識 | `.gesture(MagnificationGesture().onChanged { scale in ... })` |
-| | | |
-| | | |
-| | | |
+| `onTapGesture` | 要素がタップされたときに特定の処理を実行する最も手軽なモディファイア | `.onTapGesture { tapCount += 1 }` |
+| `onLongPressGesture` | 要素が一定時間（minimumDuration）長押しされたときに処理を実行するモディファイア | `.onLongPressGesture(minimumDuration: 1.0) { ... }` |
+| `RotateGesture` | 2本指でひねって回転させる操作を検出するジェスチャー | `RotateGesture().onChanged { value in ... }` |
 
 ## 自分の実験メモ
 
 （模範コードを改変して試したことを書く）
 
 **実験1：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：DragDemoView で .onEnded の時の lastOffset = offset をコメントアウトして動かしてみた。
+- 結果：ドラッグを離すと元の位置に巻き戻ってしまい、連続してカードを移動させることができなくなった。
+- わかったこと：操作中の移動とは別に、直前の最終位置を保持しておかないと位置がリセットされてしまうことがわかった。
 
 **実験2：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：CombinedDemoView の .simultaneousGesture を通常の .gesture に書き換えて動かしてみた。
+- 結果：ドラッグしながらピンチで拡大しようとしても、片方の操作しか反応しなくなった。
+- わかったこと：SwiftUIで複数のジェスチャーをユーザーに同時に行わせたい時は、.simultaneousGesture を使う必要がある。
 
 ## AIに聞いて特に理解が深まった質問 TOP3
 
 1. **質問：**
+   ドラッグ中のコードにある value.translation と lastOffset はどう違うの？
+    
    **得られた理解：**
-
+   value.translation は「今回指を離さずに動かした距離（相対値）」であり、lastOffset は「前回までに移動を終えた確定位置（絶対値）」。両方を足し合わせることでスムーズな連続移動が実現できる。
+   
 2. **質問：**
+   onLongPressGesture の minimumDuration: 1.0 は何を指定しているの？
+   
    **得られた理解：**
+   長押しと判定されるまでに必要な秒数。これを調整することで、誤作動を防ぎつつユーザーにしっかり長押しさせるUIを作ることができる。
 
 3. **質問：**
+   リセットボタンを押した時の withAnimation(.spring) は何をしているの？
+   
    **得られた理解：**
+   値がゼロに戻る瞬間にバネ（スプリング）のような自然でヌルヌルとした動きをつけて、カードがピタッと元の位置に吸い付くような気持ちいいアニメーションを再現している。
 
 ## この章のまとめ
 
-（この章で学んだ最も重要なことを、未来の自分が読み返したときに役立つように書く）
+ユーザーに不満を与えないために工夫されていること
+
+・正確な計算： 現在の移動量（translation）と過去の位置（lastOffset）を足し合わせてスムーズに連続移動させる。
+
+・誤作動防止： minimumDuration で長押しの秒数を調整し、意図しない操作を防ぐ。
+
+・心地よい演出： withAnimation(.spring) を使い、バネのような自然な動きで操作の心地よさを高める。
