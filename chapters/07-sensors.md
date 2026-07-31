@@ -381,37 +381,52 @@ CLLocationManagerを使うことで位置情報を継続的に取得でき、did
 
 | 項目 | 説明 | 使用例 |
 |------|------|--------|
-| 例：`CMMotionManager` | 加速度・ジャイロ・気圧などのセンサーデータを取得 | `motionManager.startDeviceMotionUpdates(to: .main) { ... }` |
-| 例：`CMPedometer` | 歩数や歩行距離をカウント | `pedometer.queryPedometerData(from: startDate, to: Date())` |
-| | | |
-| | | |
-| | | |
+| `CMMotionManager` | 加速度・ジャイロ・気圧などのセンサーデータを取得 | `motionManager.startDeviceMotionUpdates(to: .main) { ... }` |
+| `CMPedometer` | 歩数や歩行距離をカウント | `pedometer.queryPedometerData(from: startDate, to: Date())` |
+| `isDeviceMotionAvailable` | 端末でモーションセンサー（DeviceMotion）が利用可能かチェックするプロパティ | `motionManager.isDeviceMotionAvailable` |
+| `startDeviceMotionUpdates` | モーションセンサーからのデータ取得を開始し、値が届くたびにクロージャ内の処理を実行するメソッド | `motionManager.startDeviceMotionUpdates(to: .main) { ... }` |
+| `stopDeviceMotionUpdates` | センサーデータの取得を停止するメソッド | `motionManager.stopDeviceMotionUpdates()` |
 
 ## 自分の実験メモ
 
 （模範コードを改変して試したことを書く）
 
 **実験1：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：motionManager.deviceMotionUpdateInterval = 1.0 / 60.0 の部分を1.0 / 10.0（秒間10回）や 1.0 / 1.0（秒間1回）に変更してみる。
+- 結果：1.0 / 1.0 にするとバブルの動きや数値の更新がカクカクになり、リアルタイム感が完全になくなった。
+- わかったこと：滑らかなアニメーションやリアルタイム処理には適切な更新インターバル（60fpsなど）の設定が不可欠である一方、バッテリー消費とのトレードオフも考慮する必要があると分かった。
 
 **実験2：**
-- やったこと：
-- 結果：
-- わかったこと：
+- やったこと：バブルの .offset にある max(-maxOffset, min(maxOffset, xOffset)) を外し、単純な xOffset / yOffset だけに書き換えてみる。
+- 結果：iPhoneを大きく傾けたとき、赤色のバブルが外側のグレーの円（枠線）を飛び出して画面外まで行ってしまった。
+- わかったこと：min と max を組み合わせることで、数値がどれだけ大きくなってもUIの枠内に要素を留める「安全策（クランプ処理）」の書き方を学んだ。
 
 ## AIに聞いて特に理解が深まった質問 TOP3
 
 1. **質問：**
+   センサーの数値を表示するときに value * 180 / .pi と計算しているのはなぜ？
+   
    **得られた理解：**
+   CoreMotionから取得できる角度データは「弧度法（ラジアン: rad）」なので、人間になじみのある「度数法（度: °）」に変換するため。
 
 2. **質問：**
+   motionManager.deviceMotionUpdateInterval = 1.0 / 60.0 の意味は？
+   
    **得られた理解：**
+   1秒間に60回（60fps）センサーデータを更新する設定。画面の描写速度に合わせてぬるぬる動かすための指定であること。
 
 3. **質問：**
+   MotionManager に @Observable をつけているのはなぜ？
+   
    **得られた理解：**
+   センサーの値（pitch や roll）が変化したときに、SwiftUIがそれを検知して画面（ContentView）を自動で再描画できるようにするため。
 
 ## この章のまとめ
 
-（この章で学んだ最も重要なことを、未来の自分が読み返したときに役立つように書く）
+CoreMotionを用いてiPhoneの傾き（Pitch / Roll / Yaw）を取得し、リアルタイムでUIに反映させる水平器アプリの実装方法を学んだ。
+
+・状態の同期： @Observable と 1.0 / 60.0 秒周期の更新を組み合わせ、滑らかで遅延のない描画処理を実現できた。
+
+・UIの数値制御： min / max（クランプ処理）による移動範囲の制限や、abs（絶対値）を用いた水平判定の閾値設定など、画面に正確かつ安全に描画する計算手法を習得した。
+
+・エラーハンドリング： シミュレータ等のセンサー非対応環境に対して ContentUnavailableView で適切なメッセージを出すUI設計の大切さを学んだ。
