@@ -18,4 +18,4 @@
 
 ## 相手のリポジトリに書いたIssueのURL
 
-[ピアレビュー第3回](https://github.com/...](https://github.com/Takagieee3/swift-textbook-template/issues/3)
+[ピアレビュー第3回](https://github.com/Takagieee3/swift-textbook-template/issues/3)
