@@ -386,6 +386,10 @@ UserDefaults へ手動で保存する処理や、画面を更新するための�
 
 **実験1：**
 - やったこと：お気に入りを「上に表示」するだけでなく、「お気に入り以外を非表示にする（絞り込み）」処理に変更してみた。
+
+<img width="150" height="300" alt="Simulator Screenshot - iPhone 17 Pro - 2026-08-05 at 14 19 09" src="https://github.com/user-attachments/assets/6d52b17d-de31-4dc2-b148-b30382e73d20" />
+<img width="150" height="300" alt="Simulator Screenshot - iPhone 17 Pro - 2026-08-05 at 14 19 33" src="https://github.com/user-attachments/assets/728d9d91-77f5-4154-a5c2-3596f833e142" />
+
   
 - 結果：画面にはお気に入りにチェックが入ったメモだけが表示され、それ以外のメモはリストから消えた。
   
